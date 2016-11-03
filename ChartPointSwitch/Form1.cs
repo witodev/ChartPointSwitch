@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Windows.Forms.DataVisualization.Charting;
 
 namespace ChartPointSwitch
 {
@@ -15,6 +16,93 @@ namespace ChartPointSwitch
         public Form1()
         {
             InitializeComponent();
+        }
+
+        public DataPoint firstP;
+        private DataPoint secondP;
+        private bool selFist = false;
+        private bool selSecond = false;
+        private ToolTip tip = new ToolTip();
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            var rnd = new Random();
+
+            for (int i = 0; i < 3; i++)
+            {
+                var serie = new Series();
+                serie.Name = i.ToString();
+                serie.ChartType = SeriesChartType.Line;
+                serie.MarkerStyle = MarkerStyle.Circle;
+                serie.MarkerSize = 7;
+
+                for (int j = 0; j < 10; j++)
+                {
+                    serie.Points.AddXY(j, rnd.Next() / 1000.0);
+                }
+
+                chart1.Series.Add(serie);
+            }
+        }
+
+        private void chart1_MouseClick(object sender, MouseEventArgs e)
+        {
+            var hit = chart1.HitTest(e.X, e.Y);
+
+            if (hit.ChartElementType == ChartElementType.DataPoint)
+            {
+                var p = (DataPoint)hit.Object;
+
+                if (selFist == false)
+                {
+                    firstP = p;
+                    selFist = true;
+                }
+                else if (selSecond == false && p != firstP)
+                {
+                    secondP = p;
+                    selSecond = true;
+                }
+
+                if (selFist == true && selSecond == true)
+                {
+                    var x = secondP.XValue;
+                    var y = secondP.YValues[0];
+
+                    secondP.XValue = firstP.XValue;
+                    secondP.YValues[0] = firstP.YValues[0];
+
+                    firstP.XValue = x;
+                    firstP.YValues[0] = y;
+
+                    chart1.Invalidate();
+
+                    selFist = false;
+                    selSecond = false;
+                }
+            }
+        }
+
+        private void chart1_MouseMove(object sender, MouseEventArgs e)
+        {
+            var hit = chart1.HitTest(e.X, e.Y, ChartElementType.DataPoint);
+
+            if (hit.ChartElementType != ChartElementType.DataPoint)
+            {
+                tip.RemoveAll();
+                tip.Tag = null;
+                return;
+            }
+
+            var p = (DataPoint)hit.Object;
+            if (tip.Tag == p)
+                return;
+            var x = p.XValue;
+            var y = p.YValues[0];
+            var txt = string.Format("X={0}\nY={1}", x, y);
+            tip.Tag = p;
+            tip.Show(txt, chart1, e.Location.X + 10, e.Location.Y + 10);
+
         }
     }
 }
