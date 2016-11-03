@@ -18,7 +18,7 @@ namespace ChartPointSwitch
             InitializeComponent();
         }
 
-        public DataPoint firstP;
+        private DataPoint firstP;
         private DataPoint secondP;
         private bool selFist = false;
         private bool selSecond = false;
@@ -26,6 +26,8 @@ namespace ChartPointSwitch
 
         private void button1_Click(object sender, EventArgs e)
         {
+            chart1.Series.Clear();
+
             var rnd = new Random();
 
             for (int i = 0; i < 3; i++)
@@ -38,7 +40,7 @@ namespace ChartPointSwitch
 
                 for (int j = 0; j < 10; j++)
                 {
-                    serie.Points.AddXY(j, rnd.Next() / 1000.0);
+                    serie.Points.AddXY(j, rnd.Next(0,10000) / 1000.0);
                 }
 
                 chart1.Series.Add(serie);
@@ -58,7 +60,7 @@ namespace ChartPointSwitch
                     firstP = p;
                     selFist = true;
                 }
-                else if (selSecond == false && p != firstP)
+                else if (p != firstP)
                 {
                     secondP = p;
                     selSecond = true;
@@ -85,7 +87,7 @@ namespace ChartPointSwitch
 
         private void chart1_MouseMove(object sender, MouseEventArgs e)
         {
-            var hit = chart1.HitTest(e.X, e.Y, ChartElementType.DataPoint);
+            var hit = chart1.HitTest(e.X, e.Y);
 
             if (hit.ChartElementType != ChartElementType.DataPoint)
             {
@@ -103,6 +105,35 @@ namespace ChartPointSwitch
             tip.Tag = p;
             tip.Show(txt, chart1, e.Location.X + 10, e.Location.Y + 10);
 
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            var sfd = new SaveFileDialog();
+            sfd.Title = "Save to file";
+            sfd.Filter = "Text file|*.txt";
+            
+            if (sfd.ShowDialog() == DialogResult.OK)
+            {
+                SaveSeriesToFile(sfd.FileName);
+            }
+        }
+
+        private void SaveSeriesToFile(string fileName)
+        {
+            var sb = new StringBuilder();
+
+            for (int i = 0; i < chart1.Series.Count; i++)
+            {
+                sb.Append(i + 1);
+                for (int j = 0; j < chart1.Series[i].Points.Count; j++)
+                {
+                    sb.Append("\t" + chart1.Series[i].Points[j].YValues[0]);
+                }
+                sb.AppendLine();
+            }
+
+            System.IO.File.WriteAllText(fileName, sb.ToString());
         }
     }
 }
